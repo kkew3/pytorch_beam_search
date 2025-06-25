@@ -197,7 +197,7 @@ def naive_beam_search(
         topk_candidates = grow_candidates(topk_candidates, token_ids, seq_ids)
         # is_completed shape: (beam_width,).
         is_completed = token_ids == eos_token_id
-        completed_candidates.append(topk_candidates[is_completed])
+        completed_candidates.append(topk_candidates[is_completed, 1:])
         completed_candidate_scores.append(topk_log_probs[is_completed])
         # topk_candidates shape: (k, _step + 2), where k <= beam_width.
         topk_candidates = topk_candidates[~is_completed]
@@ -208,7 +208,7 @@ def naive_beam_search(
         if beam_width == 0:
             break
     if topk_candidates.size(0) > 0:
-        completed_candidates.append(topk_candidates)
+        completed_candidates.append(topk_candidates[:, 1:])
         completed_candidate_scores.append(topk_log_probs)
     # Get the index of the top-1 sequence.
     j = torch.cat(completed_candidate_scores, 0).argmax(0)
