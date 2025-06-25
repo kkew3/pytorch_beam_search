@@ -149,6 +149,7 @@ def naive_beam_search(
     eos_token_id: int,
     beam_width: int,
     max_length: int,
+    length_normalization: float,
 ) -> Tensor:
     """
     Parameters
@@ -165,6 +166,9 @@ def naive_beam_search(
         The beam width.
     max_length : int
         The max length to sample.
+    length_normalization : float
+        The length normalization factor. Set to 0 to disable length
+        normalization.
 
     Returns
     -------
@@ -181,25 +185,26 @@ def naive_beam_search(
     completed_candidates = []
     # Element i shape: (k_i,).
     completed_candidate_scores = []
-    for _step in range(max_length):
-        # topk_candidates shape: (k, _step + 1), where k <= beam_width.
+    for step in range(1, 1 + max_length):
+        # topk_candidates shape: (k, step), where k <= beam_width.
         # log_probs shape: (vocab_size, k).
         log_probs = model(topk_candidates).log_softmax(-1).t()
         # topk_log_probs shape: (k,).
         # cum_log_probs shape: (vocab_size, k).
         cum_log_probs = topk_log_probs + log_probs
-        # topk_log_probs shape: (beam_width,).
         # token_ids & seq_ids shape: (beam_width,).
-        topk_log_probs, (token_ids, seq_ids) = topk_2d(
-            cum_log_probs, beam_width
+        _, (token_ids, seq_ids) = topk_2d(
+            cum_log_probs / step**length_normalization, beam_width
         )
-        # topk_candidates shape: (beam_width, _step + 2).
+        # topk_log_probs shape: (beam_width,).
+        topk_log_probs = cum_log_probs[token_ids, seq_ids]
+        # topk_candidates shape: (beam_width, step + 1).
         topk_candidates = grow_candidates(topk_candidates, token_ids, seq_ids)
         # is_completed shape: (beam_width,).
         is_completed = token_ids == eos_token_id
         completed_candidates.append(topk_candidates[is_completed, 1:])
         completed_candidate_scores.append(topk_log_probs[is_completed])
-        # topk_candidates shape: (k, _step + 2), where k <= beam_width.
+        # topk_candidates shape: (k, step + 1), where k <= beam_width.
         topk_candidates = topk_candidates[~is_completed]
         # topk_log_probs shape: (k,).
         topk_log_probs = topk_log_probs[~is_completed]
