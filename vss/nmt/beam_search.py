@@ -207,8 +207,8 @@ def naive_beam_search(
 
     # Process the batch of inputs one at a time.
     batch_size = input_ids.size(0)
-    final_samples = []
-    final_normalized_log_probs = []
+    final_samples: list[Tensor] = []
+    final_normalized_log_probs: list[NormalizedLogProb] = []
     for i in range(batch_size):
         # Form singleton batch of inputs.
         # shape: (1, enc_seq_len)
