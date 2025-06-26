@@ -1,7 +1,18 @@
-from typing import Callable, Literal
+from typing import Callable, Literal, NamedTuple, Any
 
 import torch
 from torch import Tensor
+
+
+class ModelOutputs(NamedTuple):
+    logits: Tensor
+    """The logits of the next token, of shape (batch_size, vocab_size)."""
+
+    past_key_values: Any
+    """The past KV caches."""
+
+    encoder_outputs: Any
+    """The encoder outputs of current (input_ids, attention_mask)."""
 
 
 class NormalizedLogProb(float):
@@ -17,7 +28,7 @@ def normalize_log_prob(
 
 
 def naive_beam_search(
-    model: Callable[[Tensor, Tensor, Tensor], Tensor],
+    model: Callable[[Tensor, Tensor, Tensor], ModelOutputs],
     bos_token_id: int,
     eos_token_id: int,
     beam_width: int,
@@ -36,7 +47,7 @@ def naive_beam_search(
         of next token logits. Shapes: input_ids---(batch_size,
         enc_seq_len), attention_mask---(batch_size, enc_seq_len),
         decoder_input_ids---(batch_size, dec_seq_len), return
-        value---(batch_size, vocab_size).
+        value---see docstring of `ModelOutputs` named tuple.
     bos_token_id : int
         The beginning-of-sequence token id.
     eos_token_id : int
@@ -94,7 +105,7 @@ def naive_beam_search(
                         curr_attention_mask,
                         torch.tensor([dec_input_ids], device=device),
                     )
-                    .squeeze_(0)
+                    .logits.squeeze(0)
                     .log_softmax(0)
                 )
                 vocab_size = next_log_probs.size(0)
