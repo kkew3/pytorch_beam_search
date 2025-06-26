@@ -151,7 +151,7 @@ def naive_beam_search(
     """
     Parameters
     ----------
-    model : (LongTensor, LongTensor, LongTensor, LongTensor) -> FloatTensor
+    model : (LongTensor, LongTensor, LongTensor) -> FloatTensor
         The language model, should be callable as `model(input_ids,
         attention_mask, decoder_input_ids)` and return a batch
         of next token logits. Shapes: input_ids---(batch_size,
