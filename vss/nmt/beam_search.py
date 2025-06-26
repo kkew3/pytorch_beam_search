@@ -215,6 +215,7 @@ def naive_beam_search(
         curr_input_ids = input_ids[i : i + 1]
         # shape: (1, enc_seq_len)
         curr_attention_mask = attention_mask[i : i + 1]
+        curr_beam_width = beam_width
         # curr_beam: a list of candidate (dec_input_ids, unnormalized
         # log_prob).
         curr_beam: list[tuple[list[int], float]] = [([bos_token_id], 0.0)]
@@ -250,7 +251,7 @@ def naive_beam_search(
                 ),
                 reverse=True,
             )
-            topk_candidates = all_candidates[:beam_width]
+            topk_candidates = all_candidates[:curr_beam_width]
             for dec_input_ids, unnormalized_log_prob in topk_candidates:
                 last_token = dec_input_ids[-1]
                 if last_token == eos_token_id:
@@ -260,9 +261,11 @@ def naive_beam_search(
                     completed_sequences.append(
                         (dec_input_ids, normalized_log_prob)
                     )
-                    beam_width -= 1
+                    curr_beam_width -= 1
                 else:
                     curr_beam.append((dec_input_ids, unnormalized_log_prob))
+            if curr_beam_width == 0:
+                break
         for dec_input_ids, unnormalized_log_prob in curr_beam:
             completed_sequences.append(
                 (
