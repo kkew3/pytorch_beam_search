@@ -105,7 +105,8 @@ def naive_beam_search(
                         curr_attention_mask,
                         torch.tensor([dec_input_ids], device=device),
                     )
-                    .logits.squeeze(0)
+                    .logits[:, -1]  # -1: take the logits of the latest token.
+                    .squeeze(0)
                     .log_softmax(0)
                 )
                 vocab_size = next_log_probs.size(0)
