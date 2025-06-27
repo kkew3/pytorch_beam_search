@@ -226,7 +226,7 @@ def beam_search(
             last_index = mask_indices[-1].item() + 1
         else:
             last_index = seq.size(0)
-        # Strip off BOS token from beginning if present
+        # Strip off BOS token from beginning
         seq = seq[1:last_index]
         mask = mask[1:last_index]
         assert seq.size(0) > 0
