@@ -21,7 +21,7 @@ class ModelOutputs(NamedTuple):
 
 
 class Model(Protocol):
-    def __call__(self, input_ids: Tensor, attention_mask: Tensor, decoder_input_ids: Tensor) -> ModelOutputs: ...
+    def __call__(self, input_ids: Tensor, attention_mask: Tensor, encoder_outputs: Any | None, decoder_input_ids: Tensor) -> ModelOutputs: ...
 
 
 def beam_search(
@@ -78,6 +78,9 @@ def beam_search(
     flat_input_ids = input_ids.unsqueeze(1).expand(batch_size, beam_width, enc_seq_len).reshape(batch_size * beam_width, enc_seq_len)  # (B*beam, enc_seq_len)
     flat_attention_mask = attention_mask.unsqueeze(1).expand(batch_size, beam_width, enc_seq_len).reshape(batch_size * beam_width, enc_seq_len)  # (B*beam, enc_seq_len)
 
+    # Since `flat_input_ids` and `flat_attention_mask` never changes, we may cache the encoder_outputs
+    encoder_outputs = None
+
     # Initial decoded input_ids (B*beam, 1)
     generated = torch.full(
         (batch_size * beam_width, 1),
@@ -112,6 +115,7 @@ def beam_search(
         outputs = model(
             input_ids=flat_input_ids,              # (B*beam, enc_seq_len)
             attention_mask=flat_attention_mask,    # (B*beam, enc_seq_len)
+            encoder_outputs=encoder_outputs,
             decoder_input_ids=generated,           # (B*beam, cur_len)
         )
         # outputs.logits: (B*beam, cur_len, vocab_size)
