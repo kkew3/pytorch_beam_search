@@ -5,14 +5,21 @@ from torch import Tensor
 
 
 class ModelOutputs(NamedTuple):
+    """
+    The model outputs given (input_ids, attention_mask, decoder_input_ids),
+    where (input_ids, attention_mask) are the encoder inputs. Shapes:
+    input_ids---(batch_size, enc_seq_len), attention_mask---(batch_size,
+    enc_seq_len), decoder_input_ids---(batch_size, dec_seq_len).
+    """
+
     logits: Tensor
-    """The logits of the next token, of shape (batch_size, vocab_size)."""
+    """The logits, of shape (batch_size, dec_seq_len, vocab_size)."""
 
     past_key_values: Any
     """The past KV caches."""
 
     encoder_outputs: Any
-    """The encoder outputs of current (input_ids, attention_mask)."""
+    """The encoder outputs given the encoder inputs."""
 
 
 class NormalizedLogProb(float):
