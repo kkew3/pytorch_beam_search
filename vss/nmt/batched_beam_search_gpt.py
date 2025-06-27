@@ -70,10 +70,6 @@ def beam_search(
     # attention_mask: (batch_size, enc_seq_len)
     batch_size = input_ids.size(0)
     enc_seq_len = input_ids.size(1)
-    vocab_device = device
-
-    # For simplicity, pad to max_length everywhere for decoder
-    seq_len = max_length
 
     # Repeat encoder input for each beam
     flat_input_ids = input_ids.unsqueeze(1).expand(batch_size, beam_width, enc_seq_len).reshape(batch_size * beam_width, enc_seq_len)  # (B*beam, enc_seq_len)
