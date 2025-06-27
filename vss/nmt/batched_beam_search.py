@@ -101,6 +101,8 @@ def beam_search(
 
     batch_size, enc_seq_len = input_ids.size()
 
+    dim0_indexer = torch.arange(batch_size, device=device)
+
     # Repeat encoder input for each beam
     # flat_input_ids: # (batch_size * beam_width, enc_seq_len)
     flat_input_ids = (
@@ -204,7 +206,7 @@ def beam_search(
         )
         # topk_scores (top-k unnormalized scores): (batch_size, beam_width)
         topk_scores = next_scores.view(batch_size, beam_width * vocab_size)[
-            torch.arange(batch_size, device=device), topk_indices
+            dim0_indexer, topk_indices
         ]
         # Unravel which beam & which token.
         # beam_indices & token_indices: (batch_size, beam_width)
@@ -213,7 +215,7 @@ def beam_search(
 
         # gather_beam_idx: indices for gathering from (batch_size * beam_width)
         # sources.
-        offset = torch.arange(batch_size, device=device) * beam_width
+        offset = dim0_indexer * beam_width
         # gather_beam_idx: (batch_size * beam_width,)
         gather_beam_idx = (offset.unsqueeze_(1) + beam_indices).view(-1)
 
@@ -261,7 +263,6 @@ def beam_search(
     # Best sequence indices in each beam
     # best_norm_scores: (batch_size,)
     best_norm_scores, j = topk_norm_scores.max(1)
-    i = torch.arange(batch_size, device=device)
-    best_decoder_input_ids = decoder_input_ids[i, j]
-    best_decoder_attention_mask = decoder_attention_mask[i, j]
+    best_decoder_input_ids = decoder_input_ids[dim0_indexer, j]
+    best_decoder_attention_mask = decoder_attention_mask[dim0_indexer, j]
     return best_decoder_input_ids, best_decoder_attention_mask, best_norm_scores
