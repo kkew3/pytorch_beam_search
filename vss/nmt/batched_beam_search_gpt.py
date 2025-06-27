@@ -176,11 +176,9 @@ def beam_search(
                     this_logprob = cum_log_probs[idx].item()
                     # Length up to EOS (includes BOS; +1 if using the EOS just generated; else lengths[idx])
                     this_len = lengths[idx].item()
+                    assert this_len > 0
                     # Length normalization
-                    normed_logprob = (
-                        this_logprob / (this_len ** length_normalization)
-                        if length_normalization > 0.0 else this_logprob
-                    )
+                    normed_logprob = this_logprob / (this_len ** length_normalization)
                     # Save: (norm_prob, tokens, attn_mask, length)
                     final_hyps[b].append((normed_logprob, this_gen.clone(), this_mask.clone(), this_logprob, this_len))
 
@@ -199,10 +197,8 @@ def beam_search(
                 this_mask = gen_attention_masks[idx]
                 this_logprob = cum_log_probs[idx].item()
                 this_len = lengths[idx].item()
-                normed_logprob = (
-                    this_logprob / (this_len ** length_normalization)
-                    if length_normalization > 0.0 else this_logprob
-                )
+                assert this_len > 0
+                normed_logprob = this_logprob / (this_len ** length_normalization)
                 final_hyps[b].append((normed_logprob, this_gen.clone(), this_mask.clone(), this_logprob, this_len))
 
     # Now, pick the best hypothesis for each batch
