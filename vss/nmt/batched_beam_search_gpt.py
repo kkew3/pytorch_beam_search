@@ -225,14 +225,14 @@ def beam_search(
             last_index = mask_indices[-1].item() + 1
         else:
             last_index = seq.size(0)
-        seq = seq[:last_index]
-        mask = mask[:last_index]
+        # Strip off BOS token from beginning if present
+        seq = seq[1:last_index]
+        mask = mask[1:last_index]
+        assert seq.size(0) > 0
+
         out_sequences.append(seq)
         out_attention_masks.append(mask)
-        if length_normalization > 0.0:
-            norm_prob = real_logprob / (seq.size(0) ** length_normalization)
-        else:
-            norm_prob = real_logprob
+        norm_prob = real_logprob / (seq.size(0) ** length_normalization)
         out_logprobs.append(norm_prob)
 
     # Pad sequences to the max length of decoded sequences
