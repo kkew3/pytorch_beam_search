@@ -102,7 +102,7 @@ def beam_search(
     gen_attention_masks = torch.ones_like(generated, device=device, dtype=torch.long)  # (B*beam, cur_len). Update as generated grows.
 
     # We'll store the final hypotheses
-    # For each example, we track a list of (normalized_log_prob, tokens, attention_mask, length)
+    # For each example, we track a list of (normalized_log_prob, tokens, attention_mask)
     final_hyps = [[] for _ in range(batch_size)]  # list-of-list
 
     for step in range(1, max_length+1):  # 1 because BOS is already there
@@ -180,7 +180,7 @@ def beam_search(
                     # Length normalization
                     normed_logprob = this_logprob / (this_len ** length_normalization)
                     # Save: (norm_prob, tokens, attn_mask, length)
-                    final_hyps[b].append((normed_logprob, this_gen.clone(), this_mask.clone(), this_logprob, this_len))
+                    final_hyps[b].append((normed_logprob, this_gen.clone(), this_mask.clone()))
 
         # If all beams finished for all batches, terminate early
         if is_finished.all():
@@ -199,7 +199,7 @@ def beam_search(
                 this_len = lengths[idx].item()
                 assert this_len > 0
                 normed_logprob = this_logprob / (this_len ** length_normalization)
-                final_hyps[b].append((normed_logprob, this_gen.clone(), this_mask.clone(), this_logprob, this_len))
+                final_hyps[b].append((normed_logprob, this_gen.clone(), this_mask.clone()))
 
     # Now, pick the best hypothesis for each batch
     out_sequences = []
@@ -211,7 +211,7 @@ def beam_search(
         hyps = final_hyps[b]
         assert len(hyps) > 0
         best = max(hyps, key=lambda z: z[0])
-        _, seq, mask, real_logprob, seq_len = best
+        norm_prob, seq, mask = best
         # Find where to stop (either at EOS or full length)
         # Drop any pad tokens after EOS if any (sequence may be shorter than max, so resize accordingly)
         # The seq includes BOS and all generated tokens, possibly EOS as well: trim any trailing tokens equal to padding
@@ -227,7 +227,6 @@ def beam_search(
 
         out_sequences.append(seq)
         out_attention_masks.append(mask)
-        norm_prob = real_logprob / (seq.size(0) ** length_normalization)
         out_logprobs.append(norm_prob)
 
     # Pad sequences to the max length of decoded sequences
