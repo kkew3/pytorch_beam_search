@@ -123,7 +123,7 @@ def beam_search(
         # For each beam, select beam_width tokens for search (expand all then prune)
         # So for each batch element, there are beam_width beams
         vocab_size = logits.size(-1)
-        next_scores = cum_log_probs[:, None] + log_probs  # (B*beam, vocab_size)
+        next_scores = cum_log_probs.unsqueeze(-1) + log_probs  # (B*beam, vocab_size)
 
         # Now, for each batch example, we want top (beam_width) out of (beam_width*vocab_size) candidates
         #  1. group next_scores as (B, beam, vocab)
