@@ -16,8 +16,14 @@ class ModelOutputs(NamedTuple):
     past_key_values: Any
     """The past KV caches."""
 
-    encoder_outputs: Any
-    """The encoder outputs given the encoder inputs."""
+    encoder_last_hidden_state: Any
+    """One of the encoder outputs."""
+
+    encoder_hidden_states: Any
+    """One of the encoder outputs."""
+
+    encoder_attentions: Any
+    """One of the encoder outputs."""
 
 
 class Model(Protocol):
@@ -78,7 +84,7 @@ def beam_search(
     flat_input_ids = input_ids.unsqueeze(1).expand(batch_size, beam_width, enc_seq_len).reshape(batch_size * beam_width, enc_seq_len)  # (B*beam, enc_seq_len)
     flat_attention_mask = attention_mask.unsqueeze(1).expand(batch_size, beam_width, enc_seq_len).reshape(batch_size * beam_width, enc_seq_len)  # (B*beam, enc_seq_len)
 
-    # Since `flat_input_ids` and `flat_attention_mask` never changes, we may cache the encoder_outputs
+    # Since `flat_input_ids` and `flat_attention_mask` never change, we may cache the encoder_outputs
     encoder_outputs = None
 
     # Initial decoded input_ids (B*beam, 1)
@@ -111,13 +117,20 @@ def beam_search(
     final_hyps: list[list[tuple[float, Tensor, Tensor]]] = [[] for _ in range(batch_size)]  # list-of-list
 
     for step in range(1, max_length+1):  # 1 because BOS is already there
-        # Model expects: input_ids (B*beam, enc_seq_len), attention_mask (B*beam, enc_seq_len), decoder_input_ids (B*beam, cur_len)
+        # Model expects: input_ids (B*beam, enc_seq_len), attention_mask (B*beam, enc_seq_len), encoder_outputs, decoder_input_ids (B*beam, cur_len)
         outputs = model(
             input_ids=flat_input_ids,              # (B*beam, enc_seq_len)
             attention_mask=flat_attention_mask,    # (B*beam, enc_seq_len)
             encoder_outputs=encoder_outputs,
             decoder_input_ids=generated,           # (B*beam, cur_len)
         )
+        # Cache the encoder_outputs
+        encoder_outputs = (
+            outputs.encoder_last_hidden_state,
+            outputs.encoder_hidden_states,
+            outputs.encoder_attentions,
+        )
+
         # outputs.logits: (B*beam, cur_len, vocab_size)
         # logits: (B*beam, vocab_size)
         logits = outputs.logits[:, -1]  # -> take last token's logits
