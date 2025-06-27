@@ -1,3 +1,4 @@
+# yapf: disable
 from typing import Callable, Literal, NamedTuple, Any
 
 import torch
