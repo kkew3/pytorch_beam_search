@@ -1,5 +1,5 @@
 # yapf: disable
-from typing import Callable, Literal, NamedTuple, Any
+from typing import Literal, NamedTuple, Any, Protocol
 
 import torch
 from torch import Tensor
@@ -20,9 +20,12 @@ class ModelOutputs(NamedTuple):
     """The encoder outputs given the encoder inputs."""
 
 
+class Model(Protocol):
+    def __call__(self, input_ids: Tensor, attention_mask: Tensor, decoder_input_ids: Tensor) -> ModelOutputs: ...
+
 
 def beam_search(
-    model: Callable[[Tensor, Tensor, Tensor], ModelOutputs],
+    model: Model,
     bos_token_id: int,
     eos_token_id: int,
     pad_token_id: int,
@@ -107,9 +110,9 @@ def beam_search(
     for step in range(1, max_length+1):  # 1 because BOS is already there
         # Model expects: input_ids (B*beam, enc_seq_len), attention_mask (B*beam, enc_seq_len), decoder_input_ids (B*beam, cur_len)
         outputs = model(
-            flat_input_ids,         # (B*beam, enc_seq_len)
-            flat_attention_mask,    # (B*beam, enc_seq_len)
-            generated               # (B*beam, cur_len)
+            input_ids=flat_input_ids,              # (B*beam, enc_seq_len)
+            attention_mask=flat_attention_mask,    # (B*beam, enc_seq_len)
+            decoder_input_ids=generated,           # (B*beam, cur_len)
         )
         # outputs.logits: (B*beam, cur_len, vocab_size)
         # logits: (B*beam, vocab_size)
