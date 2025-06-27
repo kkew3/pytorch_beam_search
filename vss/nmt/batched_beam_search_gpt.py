@@ -103,7 +103,7 @@ def beam_search(
 
     # We'll store the final hypotheses
     # For each example, we track a list of (normalized_log_prob, tokens, attention_mask)
-    final_hyps = [[] for _ in range(batch_size)]  # list-of-list
+    final_hyps: list[list[tuple[float, Tensor, Tensor]]] = [[] for _ in range(batch_size)]  # list-of-list
 
     for step in range(1, max_length+1):  # 1 because BOS is already there
         # Model expects: input_ids (B*beam, enc_seq_len), attention_mask (B*beam, enc_seq_len), decoder_input_ids (B*beam, cur_len)
@@ -175,7 +175,7 @@ def beam_search(
                     this_mask = gen_attention_masks[idx]  # (cur_len,)
                     this_logprob = cum_log_probs[idx].item()
                     # Length up to EOS (includes BOS; +1 if using the EOS just generated; else lengths[idx])
-                    this_len = lengths[idx].item()
+                    this_len = int(lengths[idx].item())
                     assert this_len > 0
                     # Length normalization
                     normed_logprob = this_logprob / (this_len ** length_normalization)
@@ -196,15 +196,15 @@ def beam_search(
                 this_gen = generated[idx]
                 this_mask = gen_attention_masks[idx]
                 this_logprob = cum_log_probs[idx].item()
-                this_len = lengths[idx].item()
+                this_len = int(lengths[idx].item())
                 assert this_len > 0
                 normed_logprob = this_logprob / (this_len ** length_normalization)
                 final_hyps[b].append((normed_logprob, this_gen.clone(), this_mask.clone()))
 
     # Now, pick the best hypothesis for each batch
-    out_sequences = []
-    out_attention_masks = []
-    out_logprobs = []
+    out_sequences: list[Tensor] = []
+    out_attention_masks: list[Tensor] = []
+    out_logprobs: list[float] = []
 
     for b in range(batch_size):
         # max by normalized logprob
