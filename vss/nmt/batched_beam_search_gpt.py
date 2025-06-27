@@ -209,9 +209,7 @@ def beam_search(
     for b in range(batch_size):
         # max by normalized logprob
         hyps = final_hyps[b]
-        if not hyps:
-            # Unlikely, but pick first beam
-            hyps = [(0.0, torch.full((max_length+1,), bos_token_id, device=device, dtype=torch.long), torch.ones(max_length+1, device=device, dtype=torch.long), 0.0, 1)]
+        assert len(hyps) > 0
         best = max(hyps, key=lambda z: z[0])
         _, seq, mask, real_logprob, seq_len = best
         # Find where to stop (either at EOS or full length)
