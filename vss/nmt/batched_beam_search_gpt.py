@@ -25,6 +25,7 @@ def beam_search(
     model: Callable[[Tensor, Tensor, Tensor], ModelOutputs],
     bos_token_id: int,
     eos_token_id: int,
+    pad_token_id: int,
     beam_width: int,
     max_length: int,
     length_normalization: float,
@@ -41,6 +42,8 @@ def beam_search(
         The beginning-of-sequence token id.
     eos_token_id : int
         The end-of-sequence token id.
+    pad_token_id : int
+        The padding token id.
     beam_width : int
         The beam width.
     max_length : int
@@ -236,7 +239,7 @@ def beam_search(
     for seq, mask in zip(out_sequences, out_attention_masks):
         pad_len = max_dec_len - seq.size(0)
         if pad_len > 0:
-            seq = torch.cat([seq, torch.full((pad_len,), eos_token_id, device=device, dtype=torch.long)], dim=0)
+            seq = torch.cat([seq, torch.full((pad_len,), pad_token_id, device=device, dtype=torch.long)], dim=0)
             mask = torch.cat([mask, torch.zeros(pad_len, device=device, dtype=torch.long)], dim=0)
         padded_seqs.append(seq.unsqueeze(0))         # (1, max_dec_len)
         padded_masks.append(mask.unsqueeze(0))        # (1, max_dec_len)
