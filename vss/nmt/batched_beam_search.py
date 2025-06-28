@@ -52,7 +52,7 @@ def beam_search(
     length_normalization: float,
     input_ids: Tensor,
     attention_mask: Tensor,
-    device: Literal['cpu', 'cuda'],
+    device: Literal['cpu'],
 ) -> tuple[Tensor, Tensor, Tensor]:
     """
     Parameters
@@ -81,8 +81,10 @@ def beam_search(
         The encoder input ids of shape (batch_size, enc_seq_len).
     attention_mask : LongTensor
         The encoder attention mask of shape (batch_size, enc_seq_len).
-    device : 'cpu' | 'cuda'
-        The device.
+    device : 'cpu'
+        The device. Due to a bug (possibly on the pytorch/transformers side),
+        this function runs only on cpu. Error: "RuntimeError: (*bias): last
+        dimension must be contiguous".
 
     Returns
     -------
@@ -100,6 +102,7 @@ def beam_search(
     assert max_length >= 1
     assert beam_width >= 1
     assert length_normalization >= 0.0
+    assert device == 'cpu'
 
     batch_size, enc_seq_len = input_ids.size()
 
