@@ -253,6 +253,14 @@ def beam_search(
             # Only increment length for not finished
             lengths += (~is_finished).long()
 
+    # We need to update `decoder_attention_mask` as `lengths` has changed by
+    # reindexing with `gather_beam_idx`.
+    #
+    # decoder_attention_mask: (batch_size * beam_width, cur_len)
+    decoder_attention_mask = (
+        torch.arange(seq_len, device=device) < lengths.unsqueeze(1)
+    ).long()
+
     # Strip off BOS
     # decoder_input_ids: (batch_size * beam_width, seq_len) where seq_len <=
     # max_length
