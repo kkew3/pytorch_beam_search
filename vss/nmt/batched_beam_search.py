@@ -36,7 +36,6 @@ class Model(Protocol):
         attention_mask: Tensor,
         encoder_outputs: Any | None,
         decoder_input_ids: Tensor,
-        decoder_attention_mask: Tensor,
         past_key_values: Sequence[Sequence[Tensor]] | None,
     ) -> ModelOutputs: ...
 
