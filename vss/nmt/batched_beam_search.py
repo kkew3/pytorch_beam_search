@@ -240,7 +240,7 @@ def beam_search(
             (decoder_input_ids, next_tokens.unsqueeze(1)), 1
         )
 
-        # is_finished: (batch_size, beam_width,)
+        # is_finished: (batch_size * beam_width,)
         is_finished |= next_tokens == eos_token_id
 
         # If all beams finish for all examples in the batch, terminate early
