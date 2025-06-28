@@ -209,7 +209,7 @@ def beam_search(
         )
         # topk_scores (top-k unnormalized scores): (batch_size, beam_width)
         topk_scores = next_scores.view(batch_size, beam_width * vocab_size)[
-            dim0_indexer, topk_indices
+            dim0_indexer.unsqueeze(-1), topk_indices
         ]
         # cum_log_probs: (batch_size * beam_width,)
         cum_log_probs.copy_(topk_scores.view(-1))
