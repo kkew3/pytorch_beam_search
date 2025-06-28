@@ -52,7 +52,7 @@ def beam_search(
     length_normalization: float,
     input_ids: Tensor,
     attention_mask: Tensor,
-    device: Literal['cpu'],
+    device: Literal['cpu', 'cuda'],
 ) -> tuple[Tensor, Tensor, Tensor]:
     """
     Parameters
@@ -82,9 +82,7 @@ def beam_search(
     attention_mask : LongTensor
         The encoder attention mask of shape (batch_size, enc_seq_len).
     device : 'cpu'
-        The device. Due to a bug (possibly on the pytorch/transformers side),
-        this function runs only on cpu. Error: "RuntimeError: (*bias): last
-        dimension must be contiguous".
+        The device.
 
     Returns
     -------
@@ -102,7 +100,6 @@ def beam_search(
     assert max_length >= 1
     assert beam_width >= 1
     assert length_normalization >= 0.0
-    assert device == 'cpu'
 
     batch_size, enc_seq_len = input_ids.size()
 
@@ -161,17 +158,11 @@ def beam_search(
     for cur_len in range(1, 1 + max_length):
         seq_len = cur_len
 
-        # decoder_attention_mask: (batch_size * beam_width, cur_len)
-        decoder_attention_mask = (
-            torch.arange(cur_len, device=device) < lengths.unsqueeze(1)
-        ).long()
-
         outputs = model(
             input_ids=flat_input_ids,
             attention_mask=flat_attention_mask,
             encoder_outputs=encoder_outputs,
             decoder_input_ids=decoder_input_ids[:, -1:],
-            decoder_attention_mask=decoder_attention_mask[:, -1:],
             past_key_values=past_key_values,
         )
         # Cache the encoder_outputs.
@@ -268,9 +259,6 @@ def beam_search(
             # Only increment length for not finished
             lengths += (~is_finished).long()
 
-    # We need to update `decoder_attention_mask` as `lengths` has changed by
-    # reindexing with `gather_beam_idx`.
-    #
     # decoder_attention_mask: (batch_size * beam_width, cur_len)
     decoder_attention_mask = (
         torch.arange(seq_len, device=device) < lengths.unsqueeze(1)
