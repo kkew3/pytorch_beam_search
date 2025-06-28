@@ -224,7 +224,7 @@ def beam_search(
         # gather_beam_idx: (batch_size * beam_width,)
         gather_beam_idx = (offset.unsqueeze_(1) + beam_indices).view(-1)
 
-        # decoder_input_ids: (batch_size, beam_width, cur_len)
+        # decoder_input_ids: (batch_size * beam_width, cur_len)
         decoder_input_ids = decoder_input_ids[gather_beam_idx]
         # is_finished: (batch_size * beam_width,)
         is_finished = is_finished[gather_beam_idx]
