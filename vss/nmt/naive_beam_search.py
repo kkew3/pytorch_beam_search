@@ -34,6 +34,7 @@ def normalize_log_prob(
     return NormalizedLogProb(log_prob / length**length_normalization)
 
 
+@torch.inference_mode()  # type: ignore
 def naive_beam_search(
     model: Callable[[Tensor, Tensor, Tensor], ModelOutputs],
     bos_token_id: int,
