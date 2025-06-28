@@ -138,7 +138,7 @@ def beam_search(
     mask = torch.arange(beam_width, device=device).repeat(batch_size) != 0
     cum_log_probs[mask] = float('-inf')
 
-    # Flag for finished beams (batch_size * beam_width,)
+    # Flag for finished sequences (batch_size * beam_width,)
     is_finished = torch.zeros(
         batch_size * beam_width, dtype=torch.bool, device=device
     )
@@ -178,7 +178,7 @@ def beam_search(
         # log_probs: # (batch_size * beam_width, vocab_size)
         log_probs = logits.log_softmax(-1)
 
-        # For finished beams, force only one next token: PAD, to keep them
+        # For finished sequences, force only one next token: PAD, to keep them
         # alive and not affecting topk result.
         log_probs[is_finished, :] = float('-inf')
         log_probs[is_finished, pad_token_id] = 0.0
@@ -188,25 +188,25 @@ def beam_search(
         # Unnormalized log probs.
         # next_scores: (batch_size * beam_width, vocab_size)
         next_scores = cum_log_probs.unsqueeze(-1) + log_probs
-        # Normalized log probs.
-        # next_norm_scores: (batch_size * beam_width, vocab_size)
-        next_norm_scores = next_scores / (
-            lengths.pow(length_normalization).unsqueeze_(-1)
-        )
+        # Save finished scores before inf masking.
+        finished_scores = next_scores[is_finished, pad_token_id]
+        # Ensure finished sequences will be selected by inf masking.
+        next_scores[is_finished, pad_token_id] = float('inf')
 
         # Now, for each batch example, we want top beam_width out of
         # (beam_width * vocab_size) candidates.
 
-        # topk_norm_scores (top-k normalized scores) will be used after the
-        # max_length loop.
+        # We don't apply length normalization here because all candidates
+        # (except for finished ones, which are strictly speaking not
+        # candidates) are of the same length, such that length normalization
+        # does not contribute to ranking.
         #
-        # topk_norm_scores: (batch_size, beam_width)
         # topk_indices: (batch_size, beam_width)
-        topk_norm_scores, topk_indices = torch.topk(
-            next_norm_scores.view(batch_size, beam_width * vocab_size),
-            beam_width,
-            dim=-1,
-        )
+        _, topk_indices = next_scores.view(
+            batch_size, beam_width * vocab_size
+        ).topk(beam_width, -1)
+        # Revert inf masking of finished scores.
+        next_scores[is_finished, pad_token_id] = finished_scores
         # topk_scores (top-k unnormalized scores): (batch_size, beam_width)
         topk_scores = next_scores.view(batch_size, beam_width * vocab_size)[
             dim0_indexer.unsqueeze(-1), topk_indices
@@ -272,6 +272,10 @@ def beam_search(
         batch_size, beam_width, seq_len
     )
     # Best sequence indices in each beam
+    # Apply length normalization.
+    # topk_norm_scores: (batch_size * beam_width,)
+    topk_norm_scores = cum_log_probs / lengths.pow(length_normalization)
+    topk_norm_scores = topk_norm_scores.view(batch_size, beam_width)
     # best_norm_scores: (batch_size,)
     best_norm_scores, j = topk_norm_scores.max(1)
     best_decoder_input_ids = decoder_input_ids[dim0_indexer, j]
