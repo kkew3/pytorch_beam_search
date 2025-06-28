@@ -149,7 +149,10 @@ def beam_search(
         batch_size * beam_width, dtype=torch.long, device=device
     )  # Include BOS.
 
+    seq_len = None
     for cur_len in range(1, 1 + max_length):
+        seq_len = cur_len
+
         # decoder_attention_mask: (batch_size * beam_width, cur_len)
         decoder_attention_mask = torch.arange(
             cur_len, device=device
@@ -255,10 +258,10 @@ def beam_search(
     # max_length
     decoder_input_ids = decoder_input_ids[:, 1:]
     # (batch_size, beam_width, seq_len)
-    decoder_input_ids = decoder_input_ids.view(batch_size, beam_width, -1)
+    decoder_input_ids = decoder_input_ids.view(batch_size, beam_width, seq_len)
     # (batch_size, beam_width, seq_len)
     decoder_attention_mask = decoder_attention_mask.view(
-        batch_size, beam_width, decoder_input_ids.size(-1)
+        batch_size, beam_width, seq_len
     )
     # Best sequence indices in each beam
     # best_norm_scores: (batch_size,)
