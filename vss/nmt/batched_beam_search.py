@@ -130,7 +130,7 @@ def beam_search(
         device=device,
     )
 
-    # cumulative log probs: (batch_size * beam_width,)
+    # cumulative unnormalized log probs: (batch_size * beam_width,)
     cum_log_probs = torch.zeros(batch_size * beam_width, device=device)
     # But -- only the first beam per example gets to start, others to -inf so
     # they're inactive.
@@ -208,6 +208,8 @@ def beam_search(
         topk_scores = next_scores.view(batch_size, beam_width * vocab_size)[
             dim0_indexer, topk_indices
         ]
+        # cum_log_probs: (batch_size * beam_width,)
+        cum_log_probs.copy_(topk_scores.view(-1))
         # Unravel which beam & which token.
         # beam_indices & token_indices: (batch_size, beam_width)
         beam_indices = topk_indices // vocab_size  # elem < beam_width
@@ -221,8 +223,6 @@ def beam_search(
 
         # decoder_input_ids: (batch_size, beam_width, cur_len)
         decoder_input_ids = decoder_input_ids[gather_beam_idx]
-        # cum_log_probs: (batch_size * beam_width,)
-        cum_log_probs = topk_scores.view(-1)
         # is_finished: (batch_size * beam_width,)
         is_finished = is_finished[gather_beam_idx]
         # lengths: (batch_size * beam_width,)
