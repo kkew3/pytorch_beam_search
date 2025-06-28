@@ -149,7 +149,7 @@ def beam_search(
         batch_size * beam_width, dtype=torch.long, device=device
     )  # Include BOS.
 
-    seq_len = None
+    seq_len = 0
     for cur_len in range(1, 1 + max_length):
         seq_len = cur_len
 
