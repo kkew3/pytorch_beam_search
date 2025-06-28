@@ -154,9 +154,9 @@ def beam_search(
         seq_len = cur_len
 
         # decoder_attention_mask: (batch_size * beam_width, cur_len)
-        decoder_attention_mask = torch.arange(
-            cur_len, device=device
-        ) < lengths.unsqueeze(1)
+        decoder_attention_mask = (
+            torch.arange(cur_len, device=device) < lengths.unsqueeze(1)
+        ).long()
 
         outputs = model(
             input_ids=flat_input_ids,
