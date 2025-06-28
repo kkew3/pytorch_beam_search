@@ -39,7 +39,7 @@ class Model(Protocol):
     ) -> ModelOutputs: ...
 
 
-@torch.inference_mode()
+@torch.inference_mode()  # type: ignore
 def beam_search(
     model: Model,
     bos_token_id: int,
