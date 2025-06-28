@@ -1,7 +1,8 @@
-from typing import Literal, NamedTuple, Any, Protocol
+from typing import Literal, NamedTuple, Any, Protocol, Sequence
 
 import torch
 from torch import Tensor
+from jax.tree import map as tree_map
 
 
 class ModelOutputs(NamedTuple):
@@ -15,7 +16,7 @@ class ModelOutputs(NamedTuple):
     logits: Tensor
     """The logits, of shape (batch_size, dec_seq_len, vocab_size)."""
 
-    past_key_values: Any
+    past_key_values: Sequence[Sequence[Tensor]]
     """The past KV caches."""
 
     encoder_last_hidden_state: Any
@@ -36,6 +37,7 @@ class Model(Protocol):
         encoder_outputs: Any | None,
         decoder_input_ids: Tensor,
         decoder_attention_mask: Tensor,
+        past_key_values: Sequence[Sequence[Tensor]] | None,
     ) -> ModelOutputs: ...
 
 
@@ -121,6 +123,9 @@ def beam_search(
     # cache the encoder_outputs
     encoder_outputs = None
 
+    # The KV cache.
+    past_key_values = None
+
     # Initial decoded input_ids (batch_size * beam_width, 1)
     # decoder_input_ids: (batch_size * beam_width, cur_len), initially cur_len=1
     decoder_input_ids = torch.full(
@@ -162,8 +167,9 @@ def beam_search(
             input_ids=flat_input_ids,
             attention_mask=flat_attention_mask,
             encoder_outputs=encoder_outputs,
-            decoder_input_ids=decoder_input_ids,
-            decoder_attention_mask=decoder_attention_mask,
+            decoder_input_ids=decoder_input_ids[:, -1:],
+            decoder_attention_mask=decoder_attention_mask[:, -1:],
+            past_key_values=past_key_values,
         )
         # Cache the encoder_outputs.
         encoder_outputs = (
@@ -171,6 +177,8 @@ def beam_search(
             outputs.encoder_hidden_states,
             outputs.encoder_attentions,
         )
+        # Cache past_key_values.
+        past_key_values = outputs.past_key_values
 
         # outputs.logits: (batch_size * beam_width, cur_len, vocab_size)
         # logits: (batch_size * beam_width, vocab_size)
@@ -230,6 +238,10 @@ def beam_search(
         is_finished = is_finished[gather_beam_idx]
         # lengths: (batch_size * beam_width,)
         lengths = lengths[gather_beam_idx]
+        # each elem: (batch_size * beam_width, *)
+        past_key_values = tree_map(
+            lambda x: x[gather_beam_idx], past_key_values
+        )
 
         # next_tokens: (batch_size * beam_width,)
         next_tokens = token_indices.view(-1)
