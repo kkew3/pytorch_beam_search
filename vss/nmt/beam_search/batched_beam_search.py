@@ -126,6 +126,11 @@ def beam_search(
     past_key_values = None
 
     # Initial decoded input_ids (batch_size * beam_width, 1)
+    #
+    # We may also opt to pre-allocate an empty buffer of shape (batch_size *
+    # beam_width, max_length + 1) to avoid concatenation, but profiling says
+    # the reduction in Wall time is marginal.
+    #
     # decoder_input_ids: (batch_size * beam_width, cur_len), initially cur_len=1
     decoder_input_ids = torch.full(
         (batch_size * beam_width, 1),
