@@ -1,3 +1,8 @@
+"""
+Naive implementation of beam search that is prohbitively slow but ensured
+correct.
+"""
+
 from typing import Callable, Literal, NamedTuple, Any
 
 import torch
