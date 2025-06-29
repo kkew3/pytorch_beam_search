@@ -1,4 +1,6 @@
 # yapf: disable
+"""Batched beam search written by GPT-4.1."""
+
 from typing import Literal, NamedTuple, Any, Protocol
 
 import torch
