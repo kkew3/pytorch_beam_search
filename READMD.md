@@ -1,6 +1,6 @@
 # PyTorch Beam Search
 
-A fully vectorized beam search decoding for seq2seq [`transformers`](https://huggingface.co/docs/transformers/v4.51.3/en/index) implemented in PyTorch.
+A fully vectorized beam search for seq2seq [`transformers`](https://huggingface.co/docs/transformers/v4.51.3/en/index) implemented in PyTorch.
 
 Features:
 
