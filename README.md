@@ -39,7 +39,7 @@ DeepLearning.AI courses:
 
 Papers:
 
-- [Freitag & Al-Onaizan (2017)](https://arxiv.org/pdf/1702.01806).
+- [Freitag & Al-Onaizan (2017)](https://arxiv.org/pdf/1702.01806): "Beam Search Strategies for Neural Machine Translation".
 
 ## Similar projects
 
