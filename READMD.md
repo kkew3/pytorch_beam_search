@@ -4,6 +4,7 @@ A fully vectorized beam search decoding for seq2seq [`transformers`](https://hug
 
 Features:
 
+- [x] Line-by-line commented with descriptive docstring.
 - [x] Batched decoding.
 - [x] Fully vectorized.
 - [x] KV caching.
