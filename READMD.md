@@ -24,6 +24,11 @@ Then, I prompt GPT-4.1 to give me a [batched implementation](./beam_search/batch
 Finally, I manually refactor GPT's implementation and add on more efficiency like KV caching, and produce the [final version](./beam_search/batched_beam_search.py), while maintaining invariance of the decoding results.
 I profile the code to ensure changes that bring more complexity but only marginal speedup are not merged into the codebase.
 
+## How to use this project
+
+Since basically every application of beam search is slightly different from others, there might be no such one-for-all implementation that can be used directly.
+Hence, read the code, either the [naive implementation](./beam_search/naive_beam_search.py) or the [final version](./beam_search/batched_beam_search.py), and adapt it to your need.
+
 ## References
 
 DeepLearning.AI courses:
