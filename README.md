@@ -15,7 +15,9 @@ Features:
 ## Why this project
 
 In my research I need a fast enough beam search implementation to compute [BLEU score](https://en.wikipedia.org/wiki/BLEU).
-However, I didn't find one on the web.
+~~However, I didn't find one on the web.~~
+While `transformers`' [text generation](https://huggingface.co/docs/transformers/v4.51.3/en/main_classes/text_generation#transformers.GenerationMixin.generate) module fits the requirement well enough, I want to code myself and gain deeper understanding of beam search.
+The final product, indeed, perfectly reproduces the efficiency and correctness of `transformers` beam search implementation, but better commented, and may be more suitable for beginners to check out how beam search technically works.
 
 ## How I develop this project
 
