@@ -19,6 +19,25 @@ In my research I need a fast enough beam search implementation to compute [BLEU 
 While `transformers`' [text generation](https://huggingface.co/docs/transformers/v4.51.3/en/main_classes/text_generation#transformers.GenerationMixin.generate) module fits the requirement well enough, I want to code myself and gain deeper understanding of beam search.
 The final product, indeed, perfectly reproduces the efficiency and correctness of `transformers` beam search implementation, but better commented, and may be more suitable for beginners to check out how beam search technically works.
 
+In the parlance of `transformers`, the beam search implemented in this project corresponds to the following configuration:
+
+```python
+from transformers import GenerationConfig
+
+# Check beam_search.batched_beam_search.beam_search function.
+generation_config = GenerationConfig(
+    max_length=...,      # the max_length argument
+    early_stopping=True,
+    do_sample=False,
+    num_beams=...,       # the beam_width argument
+    use_cache=True,
+    length_penalty=...,  # the length_normalization argument
+    bos_token_id=...,    # the bos_token_id argument
+    eos_token_id=...,    # the eos_token_id argument
+    pad_token_id=...,    # the pad_token_id argument
+)
+```
+
 ## How I develop this project
 
 Batched and vectorized beam search decoding is tricky to implement.
